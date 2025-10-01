@@ -13,12 +13,29 @@ android:layout_height="match_parent">
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
 
-<com.google.android.material.floatingactionbutton.FloatingActionButton
-    android:id="@+id/fabAdd"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_gravity="bottom|end"
-    android:layout_margin="16dp"
-    android:contentDescription="TODO"
-    android:src="@android:drawable/ic_input_add" />
+
+    <LinearLayout
+        android:id="@+id/fabContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAdd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/fab_add_description"
+            app:srcCompat="@android:drawable/ic_input_add" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabFormLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:contentDescription="@string/fab_from_location_description"
+            app:srcCompat="@android:drawable/ic_input_add" />
+    </LinearLayout>
 </FrameLayout>

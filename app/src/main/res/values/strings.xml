@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Lab09</string>
+    <string name="fab_add_description">Add new location marker</string>
+    <string name="fab_from_location_description">Add new location marker</string>
 </resources>

@@ -1,15 +1,20 @@
 package com.example.lab09;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -46,8 +51,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         FloatingActionButton fabAdd = findViewById(R.id.fabAdd);
+        FloatingActionButton fabFromLocation = findViewById(R.id.fabFormLocation);
 
         fabAdd.setOnClickListener(v -> showAddDialog());
+        fabFromLocation.setOnClickListener(v -> addCurrentLocationAsPlace());
+
     }
 
     @Override
@@ -57,7 +65,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         refreshMarkers();
 
         map.setOnMapLongClickListener(latLng -> {
-            addPlace(null, latLng.latitude, latLng.longitude, "");
+            var lat = latLng.latitude;
+            var lng = latLng.longitude;
+            var deviceLocale = getResources().getConfiguration().getLocales().get(0);
+
+            String markerName = String.format(deviceLocale, "%.2f, %.2f", lat, lng);
+
+            addPlace(markerName, lat, lng, "");
         });
     }
 
@@ -69,6 +83,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .title(gd.name)
                     .snippet(gd.address));
         }
+    }
+
+    private static final int REQUEST_LOCATION_PERMISSION = 1001;
+
+    private void addCurrentLocationAsPlace() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_LOCATION_PERMISSION);
+            return;
+        }
+
+        fused.getLastLocation()
+                .addOnSuccessListener(this, location -> {
+                    if (location != null) {
+                        double lat = location.getLatitude();
+                        double lng = location.getLongitude();
+
+                        // Save to DB + add marker
+                        addPlace("My Location", lat, lng, null);
+                    } else {
+                        Toast.makeText(this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void addPlace(String name, double lat, double lng, String address) {
@@ -88,23 +127,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         input.setHint("Enter address");
 
         new AlertDialog.Builder(this)
-                .setTitle("Add place")
+                .setTitle("Add marker")
                 .setView(input)
                 .setPositiveButton("OK", (d, w) -> {
-                    String addr = input.getText().toString();
-                    if (!addr.isEmpty()) {
-                        LatLng coords = forwardGeocode(addr);
-                        if (coords != null) {
-                            addPlace(addr, coords.latitude, coords.longitude, addr);
-                            map.animateCamera(CameraUpdateFactory.newLatLngZoom(coords, 15f));
-                        } else {
-                            Toast.makeText(this, "Address not found", Toast.LENGTH_SHORT).show();
-                        }
+                    String address = input.getText().toString();
+                    if (address.isEmpty()) {
+                        return;
+                    }
+                    LatLng coords = forwardGeocode(address);
+                    if (coords != null) {
+                        addPlace(address, coords.latitude, coords.longitude, address);
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(coords, 15f));
+                    } else {
+                        Toast.makeText(this, "Address not found", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
+
 
     private LatLng forwardGeocode(String address) {
         try {
@@ -114,7 +155,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Address a = list.get(0);
                 return new LatLng(a.getLatitude(), a.getLongitude());
             }
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
         return null;
     }
 }
